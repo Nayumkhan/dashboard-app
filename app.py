@@ -6,9 +6,18 @@ import pandas as pd
 
 app = dash.Dash(__name__)
 
+color_mapping = {
+    "Available Trucks": "green",
+    "Trucks in Operation": "blue",
+    "Waiting Load": "orange",
+    "Under Offload": "purple",
+    "Breakdown": "red"
+}
+
+
 df = pd.DataFrame({
-    "Category": ["Available Trucks", "Trucks in Operation", "Waiting Load", "Under Offload", "Breakdown"],
-    "Values": [0, 0, 0, 0, 0]
+    "Category": list(color_mapping.keys()),
+    "Values": [0] * len(color_mapping)
 })
 
 app.layout = html.Div([
