@@ -46,4 +46,6 @@ def update_chart(*args):
     return bar_fig, pie_fig
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    import os
+    port = int(os.environ.get('PORT', 8050))  # Use the port assigned by Render, or default to 8050
+    app.run_server(debug=False, host='0.0.0.0', port=port)
