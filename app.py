@@ -27,7 +27,7 @@ app.layout = html.Div([
 @app.callback(
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure')],
-    [Input(f'add-button-{category}', 'n_clicks') for category in df['Category']],
+    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']],
     [Input(f'input-{category}', 'value') for category in df['Category']]
 )
 def update_chart(*args):
