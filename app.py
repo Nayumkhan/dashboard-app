@@ -54,7 +54,7 @@ def update_chart(*args):
                 total_trucks = int(new_total)
                 for category in df['Category']:
                     df.loc[df['Category'] == category, 'Values'] = 0
-            return create_figures(), '', *([''] * len(df['Category']))
+                return create_figures(), '', *([''] * len(df['Category']))
 
         for i, category in enumerate(df['Category']):
             if triggered_id == f'update-button-{category}':
