@@ -26,7 +26,7 @@ app.layout = html.Div([
     
     html.Div([
         html.Div([
-            html.Label(category, style={'fontSize': '24px'}),  # Increased font size for labels
+            html.Label(category, style={'fontSize': '24px'}),
             dcc.Input(id=f'input-{category}', type='number', placeholder='Enter Value', style={'width': '150px'}),
             html.Button('Update', id=f'update-button-{category}', n_clicks=0, style={'margin-left': '5px'})
         ], style={'margin-bottom': '20px'}) for category in df['Category']
@@ -36,8 +36,7 @@ app.layout = html.Div([
 @app.callback(
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
-     Output('balance-text', 'children'),
-     Output('total-trucks-text', 'children')],
+     Output('balance-text', 'children')],
     [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
     [Input(f'input-{category}', 'value') for category in df['Category']]
 )
@@ -67,9 +66,9 @@ def update_chart(*args):
 
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories')
 
-    return bar_fig, pie_fig, balance_text, total_text
+    return bar_fig, pie_fig, balance_text
+
+application = app.server
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-application = app.server
