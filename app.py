@@ -13,26 +13,35 @@ df = pd.DataFrame({
 })
 
 app.layout = html.Div([
-    html.H1("Truck Management Dashboard"),
-    html.Div([
-        html.Label("Total number of Trucks"),
-        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', value=''),
-        html.Button('Update', id='update-button-total', n_clicks=0)
-    ]),
-    dcc.Graph(id='bar-chart', style={'height': '40vh'}),
-    dcc.Graph(id='pie-chart', style={'height': '40vh'}),
-    html.Div([
-        html.Div([
-            html.Label(category),
-            dcc.Input(id=f'input-{category.replace(" ", "_")}', type='number', placeholder='Enter Value', value=''),
-            html.Button('Update', id=f'update-button-{category.replace(" ", "_")}', n_clicks=0)
-        ]) for category in df['Category']
-    ], style={'margin-bottom': '20px'}),
+    dcc.Tabs([
+        dcc.Tab(label='Truck Dashboard', children=[
+            html.Div([
+                dcc.Graph(id='bar-chart', style={'height': '40vh'}),
+                dcc.Graph(id='pie-chart', style={'height': '40vh'}),
+                html.Div([
+                    html.Div([
+                        html.Label(category),
+                        dcc.Input(id=f'input-{category.replace(" ", "_")}', type='number', placeholder='Enter Value', value=''),
+                        html.Button('Update', id=f'update-button-{category.replace(" ", "_")}', n_clicks=0)
+                    ]) for category in df['Category']
+                ], style={'margin-bottom': '20px'}),
+            ]),
+        ]),
+        dcc.Tab(label='Total Trucks', children=[
+            html.Div([
+                html.H2("Total Number of Trucks"),
+                html.Div(id='total-trucks-display', style={'font-size': '24px', 'margin-bottom': '20px'}),
+                dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', value=''),
+                html.Button('Update Total', id='update-button-total', n_clicks=0)
+            ])
+        ])
+    ])
 ])
 
 @app.callback(
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
+     Output('total-trucks-display', 'children'),
      Output('input-total-trucks', 'value'),
      *[Output(f'input-{category.replace(" ", "_")}', 'value') for category in df['Category']]
     ],
@@ -45,8 +54,12 @@ def update_chart(*args):
     global total_trucks
     ctx = dash.callback_context
 
+    # Initialize figures to be returned
     bar_fig = create_bar_chart()
     pie_fig = create_pie_chart()
+
+    # Display current total trucks
+    total_trucks_display = f"Total Trucks: {total_trucks}"
 
     if ctx.triggered:
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -56,7 +69,7 @@ def update_chart(*args):
             if new_total is not None and new_total != '':
                 total_trucks = int(new_total)
                 df['Values'] = 0
-                return bar_fig, pie_fig, '', *([''] * len(df['Category']))
+                return bar_fig, pie_fig, total_trucks_display, '', *([''] * len(df['Category']))
 
         for i, category in enumerate(df['Category']):
             if triggered_id == f'update-button-{category.replace(" ", "_")}':
@@ -67,7 +80,8 @@ def update_chart(*args):
                         total_trucks -= value_to_add
                         df.loc[df['Category'] == category, 'Values'] += value_to_add
 
-    return create_bar_chart(), create_pie_chart(), '', *([''] * len(df['Category']))
+    # Always return updated figures
+    return create_bar_chart(), create_pie_chart(), total_trucks_display, '', *([''] * len(df['Category']))
 
 def create_bar_chart():
     return px.bar(
