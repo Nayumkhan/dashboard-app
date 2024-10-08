@@ -17,7 +17,8 @@ app.layout = html.Div([
     html.H1("Truck Management Dashboard"),
     html.Div([
         html.Div(id='total-trucks', style={'fontSize': 20, 'margin-right': '10px'}),
-        html.Button('Update', id='update-total', n_clicks=0, style={'padding': '10px'})
+        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', style={'width': '150px'}),
+        html.Button('Update', id='update-total', n_clicks=0, style={'padding': '10px', 'margin-left': '5px'})
     ], style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '20px'}),
     dcc.Graph(id='bar-chart', style={'height': '300px'}),
     dcc.Graph(id='pie-chart'),
@@ -38,19 +39,26 @@ app.layout = html.Div([
      Output('total-trucks', 'children')],
     [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
     [Input('update-total', 'n_clicks')],
-    [Input(f'input-{category}', 'value') for category in df['Category']]
+    [Input(f'input-{category}', 'value') for category in df['Category']] +
+    [Input('input-total-trucks', 'value')]
 )
 def update_chart(*args):
     global df, total_trucks
     trucks_accounted_for = 0
+
+    if args[-1] is not None:
+        total_trucks = args[-1]
+
     for i, category in enumerate(df['Category']):
         n_clicks = args[i]
         new_value = args[len(df['Category']) + i]
         if n_clicks > 0 and new_value is not None:
             df.loc[df['Category'] == category, 'Values'] = new_value
             trucks_accounted_for += new_value
+
     remaining_trucks = total_trucks - trucks_accounted_for
     total_text = f"Total Number of Trucks: {remaining_trucks}"
+    
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
                      color='Category',
                      color_discrete_map={
@@ -60,6 +68,7 @@ def update_chart(*args):
                          "Under Offload": "purple",
                          "Breakdown": "red"
                      })
+    bar_fig.update_layout(height=300)  # Reduced bar chart height
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories',
                      hole=0.3)
     return bar_fig, pie_fig, total_text
@@ -78,11 +87,13 @@ def download_xlsx(n_clicks):
     return dict(content=output.getvalue(), filename="truck_data.xlsx")
 
 @app.callback(
-    [Output(f'input-{category}', 'value') for category in df['Category']],
-    [Input(f'input-{category}', 'value') for category in df['Category']]
+    [Output(f'input-{category}', 'value') for category in df['Category']] +
+    [Output('input-total-trucks', 'value')],
+    [Input(f'input-{category}', 'value') for category in df['Category']] +
+    [Input('input-total-trucks', 'value')]
 )
 def clear_inputs(*values):
-    return [None] * len(values)
+    return [None] * (len(values) - 1) + [values[-1]]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
