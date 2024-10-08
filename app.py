@@ -17,7 +17,7 @@ app.layout = html.Div([
     html.H1("Truck Management Dashboard"),
     html.Div([
         html.Div(id='total-trucks', style={'fontSize': 20, 'margin-right': '10px'}),
-        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', style={'width': '150px'}),
+        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', style={'width': '100px'}),
         html.Button('Update', id='update-total', n_clicks=0, style={'padding': '10px', 'margin-left': '5px'})
     ], style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '20px'}),
     dcc.Graph(id='bar-chart', style={'height': '300px'}),
@@ -36,7 +36,8 @@ app.layout = html.Div([
 @app.callback(
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
-     Output('total-trucks', 'children')],
+     Output('total-trucks', 'children'),
+     Output('input-total-trucks', 'value')],
     [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
     [Input('update-total', 'n_clicks')],
     [Input(f'input-{category}', 'value') for category in df['Category']] +
@@ -71,7 +72,7 @@ def update_chart(*args):
     bar_fig.update_layout(height=300)  # Reduced bar chart height
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories',
                      hole=0.3)
-    return bar_fig, pie_fig, total_text
+    return bar_fig, pie_fig, total_text, None  # Clear the input field for total trucks
 
 @app.callback(
     Output("download-dataframe-xlsx", "data"),
@@ -85,15 +86,6 @@ def download_xlsx(n_clicks):
         writer.save()
         output.seek(0)
     return dict(content=output.getvalue(), filename="truck_data.xlsx")
-
-@app.callback(
-    [Output(f'input-{category}', 'value') for category in df['Category']] +
-    [Output('input-total-trucks', 'value')],
-    [Input(f'input-{category}', 'value') for category in df['Category']] +
-    [Input('input-total-trucks', 'value')]
-)
-def clear_inputs(*values):
-    return [None] * (len(values) - 1) + [values[-1]]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
