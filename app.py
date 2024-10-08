@@ -6,11 +6,9 @@ import pandas as pd
 
 app = dash.Dash(__name__)
 
-# Set the total number of trucks as a standard
 total_trucks = 20
 balance = 20
 
-# DataFrame for the categories
 df = pd.DataFrame({
     "Category": ["Available Trucks", "Waiting Load", "Under Offload", "Breakdown"],
     "Values": [0, 0, 0, 0]
@@ -39,24 +37,24 @@ app.layout = html.Div([
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
      Output('balance-text', 'children'),
-     Output('total-trucks-text', 'children')],  # Corrected the output declaration
+     Output('total-trucks-text', 'children')],
     [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
     [Input(f'input-{category}', 'value') for category in df['Category']]
 )
 def update_chart(*args):
     global df, balance
-    trucks_accounted_for = 0  # Initialize this variable
+    trucks_accounted_for = 0
 
     for i, category in enumerate(df['Category']):
         n_clicks = args[i]
         new_value = args[len(df['Category']) + i]
         if n_clicks > 0 and new_value is not None:
             df.loc[df['Category'] == category, 'Values'] = new_value
-            trucks_accounted_for += new_value  # Update the trucks_accounted_for variable
+            trucks_accounted_for += new_value
 
     remaining_trucks = balance - trucks_accounted_for
-    total_text = f"Total Number of Trucks: {balance}"  # Total number remains constant
-    balance_text = f"Balance: {remaining_trucks}"  # Calculate remaining trucks
+    total_text = f"Total Number of Trucks: {balance}"
+    balance_text = f"Balance: {remaining_trucks}"
 
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
                      color='Category', 
@@ -69,7 +67,7 @@ def update_chart(*args):
 
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories')
 
-    return bar_fig, pie_fig, balance_text, total_text  # Ensure the order matches the output definitions
+    return bar_fig, pie_fig, balance_text, total_text
 
 if __name__ == '__main__':
     app.run_server(debug=True)
