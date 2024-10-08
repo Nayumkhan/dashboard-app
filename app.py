@@ -48,16 +48,13 @@ def update_chart(*args):
     if ctx.triggered:
         triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-        # Update total trucks
         if triggered_id == 'update-button-total':
             new_total = args[0]
             if new_total is not None and new_total != '':
                 total_trucks = int(new_total)
-                # Reset all category values
                 df['Values'] = 0
                 return create_figures(), '', '', *([''] * len(df['Category']))
 
-        # Update category values
         for i, category in enumerate(df['Category']):
             if triggered_id == f'update-button-{category.replace(" ", "_")}':
                 new_value = args[len(df['Category']) + 2 + i]
@@ -67,7 +64,6 @@ def update_chart(*args):
                         total_trucks -= value_to_add
                         df.loc[df['Category'] == category, 'Values'] += value_to_add
 
-    # Return updated figures and empty inputs
     return create_figures(), '', '', *([''] * len(df['Category']))
 
 def create_figures():
