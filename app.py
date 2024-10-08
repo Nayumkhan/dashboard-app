@@ -47,9 +47,11 @@ def update_chart(*args):
     global df, total_trucks
     trucks_accounted_for = 0
 
+    # Update total trucks if the update button is clicked
     if args[-1] is not None:
         total_trucks = args[-1]
 
+    # Update values for each category
     for i, category in enumerate(df['Category']):
         n_clicks = args[i]
         new_value = args[len(df['Category']) + i]
@@ -59,7 +61,8 @@ def update_chart(*args):
 
     remaining_trucks = total_trucks - trucks_accounted_for
     total_text = f"Total Number of Trucks: {remaining_trucks}"
-    
+
+    # Create bar chart
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
                      color='Category',
                      color_discrete_map={
@@ -70,8 +73,11 @@ def update_chart(*args):
                          "Breakdown": "red"
                      })
     bar_fig.update_layout(height=300)  # Reduced bar chart height
+
+    # Create pie chart
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories',
                      hole=0.3)
+    
     return bar_fig, pie_fig, total_text, None  # Clear the input field for total trucks
 
 @app.callback(
