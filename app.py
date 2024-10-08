@@ -6,8 +6,7 @@ import pandas as pd
 
 app = dash.Dash(__name__)
 
-total_trucks = 0  # Set the initial total number of trucks to 0
-
+total_trucks = 0
 df = pd.DataFrame({
     "Category": ["Available Trucks", "Trucks in Operation", "Waiting Load", "Under Offload", "Breakdown"],
     "Values": [0, 0, 0, 0, 0]
@@ -16,8 +15,8 @@ df = pd.DataFrame({
 app.layout = html.Div([
     html.H1("Truck Management Dashboard"),
     html.Div([
-        html.Label("Total Number of Trucks"),
-        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks'),
+        html.Label("Total number of Trucks"),
+        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', value=''),
         html.Button('Update', id='update-button-total', n_clicks=0)
     ]),
     dcc.Graph(id='bar-chart', style={'height': '40vh'}),
@@ -25,43 +24,52 @@ app.layout = html.Div([
     html.Div([
         html.Div([
             html.Label(category),
-            dcc.Input(id=f'input-{category}', type='number', placeholder='Enter Value'),
+            dcc.Input(id=f'input-{category}', type='number', placeholder='Enter Value', value=''),
             html.Button('Update', id=f'update-button-{category}', n_clicks=0)
-        ], style={'margin-bottom': '10px'}) for category in df['Category']
+        ]) for category in df['Category']
     ], style={'margin-bottom': '20px'}),
 ])
 
 @app.callback(
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
-     Output('input-total-trucks', 'value')] + 
-     [Output(f'input-{category}', 'value') for category in df['Category']],
-    [Input('update-button-total', 'n_clicks')] +
-    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']],
-    [Input('input-total-trucks', 'value')] + 
+     Output('input-total-trucks', 'value'),
+     *[Output(f'input-{category}', 'value') for category in df['Category']]
+    ],
+    [Input('update-button-total', 'n_clicks')] + 
+    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
+    [Input('input-total-trucks', 'value')] +
     [Input(f'input-{category}', 'value') for category in df['Category']]
 )
 def update_chart(*args):
-    global total_trucks, df
+    global total_trucks
+    ctx = dash.callback_context
 
-    total_clicks = args[0]
-    category_clicks = args[1:len(df['Category']) + 1]
-    total_value = args[len(df['Category']) + 1]
-    category_values = args[len(df['Category']) + 2:]
+    if ctx.triggered:
+        triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
+        
+        if triggered_id == 'update-button-total':
+            new_total = args[0]
+            if new_total is not None and new_total != '':
+                total_trucks = int(new_total)
+                for category in df['Category']:
+                    df.loc[df['Category'] == category, 'Values'] = 0
+            return create_figures(), '', *([''] * len(df['Category']))
 
-    if total_clicks > 0 and total_value is not None:
-        total_trucks = total_value
+        for i, category in enumerate(df['Category']):
+            if triggered_id == f'update-button-{category}':
+                new_value = args[len(df['Category']) + 2 + i]
+                if new_value is not None and new_value != '':
+                    value_to_add = int(new_value)
+                    if total_trucks >= value_to_add:
+                        total_trucks -= value_to_add
+                        df.loc[df['Category'] == category, 'Values'] += value_to_add
 
-    for i, category in enumerate(df['Category']):
-        n_clicks = category_clicks[i]
-        new_value = category_values[i]
-        if n_clicks > 0 and new_value is not None:
-            if total_trucks >= new_value:  # Only allow input if it does not exceed the total trucks
-                total_trucks -= new_value
-                df.loc[df['Category'] == category, 'Values'] += new_value
+    return create_figures(), '', *([''] * len(df['Category']))
 
+def create_figures():
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
-                     color='Category', 
+                     color='Category',
                      color_discrete_map={
                          "Available Trucks": "green",
                          "Trucks in Operation": "blue",
@@ -69,10 +77,8 @@ def update_chart(*args):
                          "Under Offload": "purple",
                          "Breakdown": "red"
                      })
-
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories')
-
-    return bar_fig, pie_fig, '' + '' + '' + '' + ''  # Clear the inputs by returning empty strings
+    return bar_fig, pie_fig
 
 if __name__ == '__main__':
     app.run_server(debug=True)
