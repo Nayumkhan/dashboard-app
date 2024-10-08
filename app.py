@@ -78,8 +78,29 @@ def update_chart(*args):
     bar_fig.update_layout(height=300)  
     pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories',
                      hole=0.3)
-    
+
     return bar_fig, pie_fig, total_text, *display_values
+
+@app.callback(
+    [Output(f'input-{category}', 'value') for category in df['Category']] +
+    [Output('input-total-trucks', 'value')],
+    [Input(f'input-{category}', 'value') for category in df['Category']] +
+    [Input('input-total-trucks', 'value')] +
+    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
+    [Input('update-total', 'n_clicks')]
+)
+def clear_inputs(*values):
+    triggered = dash.callback_context.triggered
+    reset_values = [None] * len(df['Category'])
+
+    for i, category in enumerate(df['Category']):
+        if f'update-button-{category}' in [t['prop_id'].split('.')[0] for t in triggered]:
+            reset_values[i] = None
+
+    if 'update-total' in [t['prop_id'].split('.')[0] for t in triggered]:
+        return reset_values + [None]  # Clear total trucks input as well
+
+    return reset_values + [values[-1]]  # Keep total trucks input
 
 @app.callback(
     Output("download-dataframe-xlsx", "data"),
@@ -93,15 +114,6 @@ def download_xlsx(n_clicks):
         writer.save()
         output.seek(0)
     return dict(content=output.getvalue(), filename="truck_data.xlsx")
-
-@app.callback(
-    [Output(f'input-{category}', 'value') for category in df['Category']] +
-    [Output('input-total-trucks', 'value')],
-    [Input(f'input-{category}', 'value') for category in df['Category']] +
-    [Input('input-total-trucks', 'value')]
-)
-def clear_inputs(*values):
-    return [None] * (len(values) - 1) + [values[-1]]
 
 if __name__ == '__main__':
     app.run_server(debug=True)
