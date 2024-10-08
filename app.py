@@ -3,11 +3,11 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
-import io
 
 app = dash.Dash(__name__)
 
-total_trucks = 0
+total_trucks = 0  # Set the initial total number of trucks to 0
+
 df = pd.DataFrame({
     "Category": ["Available Trucks", "Trucks in Operation", "Waiting Load", "Under Offload", "Breakdown"],
     "Values": [0, 0, 0, 0, 0]
@@ -16,55 +16,52 @@ df = pd.DataFrame({
 app.layout = html.Div([
     html.H1("Truck Management Dashboard"),
     html.Div([
-        html.Div(id='total-trucks', style={'fontSize': 20, 'margin-right': '10px'}),
-        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks', style={'width': '100px'}),
-        html.Button('Update', id='update-total', n_clicks=0, style={'padding': '10px', 'margin-left': '5px'})
-    ], style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '20px'}),
-    dcc.Graph(id='bar-chart', style={'height': '300px'}),
-    dcc.Graph(id='pie-chart'),
+        html.Label("Total Number of Trucks"),
+        dcc.Input(id='input-total-trucks', type='number', placeholder='Enter Total Trucks'),
+        html.Button('Update', id='update-button-total', n_clicks=0)
+    ]),
+    dcc.Graph(id='bar-chart', style={'height': '40vh'}),
+    dcc.Graph(id='pie-chart', style={'height': '40vh'}),
     html.Div([
         html.Div([
             html.Label(category),
-            dcc.Input(id=f'input-{category}', type='number', placeholder='Enter Value', style={'width': '100px'}),
-            html.Button('Update', id=f'update-button-{category}', n_clicks=0, style={'padding': '10px', 'margin-left': '5px'})
+            dcc.Input(id=f'input-{category}', type='number', placeholder='Enter Value'),
+            html.Button('Update', id=f'update-button-{category}', n_clicks=0)
         ], style={'margin-bottom': '10px'}) for category in df['Category']
-    ], style={'display': 'flex', 'flex-direction': 'column', 'align-items': 'flex-start', 'margin-top': '20px'}),
-    html.Button('Download Excel Report', id='download-button', n_clicks=0, style={'padding': '10px', 'margin-top': '20px'}),
-    dcc.Download(id='download-dataframe-xlsx')
+    ], style={'margin-bottom': '20px'}),
 ])
 
 @app.callback(
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
-     Output('total-trucks', 'children'),
-     Output('input-total-trucks', 'value')],
-    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
-    [Input('update-total', 'n_clicks')],
-    [Input(f'input-{category}', 'value') for category in df['Category']] +
-    [Input('input-total-trucks', 'value')]
+     Output('input-total-trucks', 'value')] + 
+     [Output(f'input-{category}', 'value') for category in df['Category']],
+    [Input('update-button-total', 'n_clicks')] +
+    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']],
+    [Input('input-total-trucks', 'value')] + 
+    [Input(f'input-{category}', 'value') for category in df['Category']]
 )
 def update_chart(*args):
-    global df, total_trucks
-    trucks_accounted_for = 0
+    global total_trucks, df
 
-    # Update total trucks if the update button is clicked
-    if args[-1] is not None:
-        total_trucks = args[-1]
+    total_clicks = args[0]
+    category_clicks = args[1:len(df['Category']) + 1]
+    total_value = args[len(df['Category']) + 1]
+    category_values = args[len(df['Category']) + 2:]
 
-    # Update values for each category
+    if total_clicks > 0 and total_value is not None:
+        total_trucks = total_value
+
     for i, category in enumerate(df['Category']):
-        n_clicks = args[i]
-        new_value = args[len(df['Category']) + i]
+        n_clicks = category_clicks[i]
+        new_value = category_values[i]
         if n_clicks > 0 and new_value is not None:
-            df.loc[df['Category'] == category, 'Values'] = new_value
-            trucks_accounted_for += new_value
+            if total_trucks >= new_value:  # Only allow input if it does not exceed the total trucks
+                total_trucks -= new_value
+                df.loc[df['Category'] == category, 'Values'] += new_value
 
-    remaining_trucks = total_trucks - trucks_accounted_for
-    total_text = f"Total Number of Trucks: {remaining_trucks}"
-
-    # Create bar chart
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
-                     color='Category',
+                     color='Category', 
                      color_discrete_map={
                          "Available Trucks": "green",
                          "Trucks in Operation": "blue",
@@ -72,28 +69,10 @@ def update_chart(*args):
                          "Under Offload": "purple",
                          "Breakdown": "red"
                      })
-    bar_fig.update_layout(height=300)  # Reduced bar chart height
 
-    # Create pie chart
-    pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories',
-                     hole=0.3)
-    
-    return bar_fig, pie_fig, total_text, None  # Clear the input field for total trucks
+    pie_fig = px.pie(df, values='Values', names='Category', title='Distribution of Truck Categories')
 
-@app.callback(
-    Output("download-dataframe-xlsx", "data"),
-    Input("download-button", "n_clicks"),
-    prevent_initial_call=True,
-)
-def download_xlsx(n_clicks):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df.to_excel(writer, sheet_name='Truck Data', index=False)
-        writer.save()
-        output.seek(0)
-    return dict(content=output.getvalue(), filename="truck_data.xlsx")
+    return bar_fig, pie_fig, '' + '' + '' + '' + ''  # Clear the inputs by returning empty strings
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-
-application = app.server
