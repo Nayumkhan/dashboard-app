@@ -41,7 +41,7 @@ def update_chart(*args):
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
                      color='Category', 
                      color_discrete_map={
-			 "Total number of Trucks": "blue",
+                         "Total number of Trucks": "blue",
                          "Available Trucks": "green",
                          "Trucks in Operation": "orange",
                          "Waiting Load": "yellow",
