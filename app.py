@@ -3,7 +3,6 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 import plotly.express as px
 import pandas as pd
-import os
 
 app = dash.Dash(__name__)
 
@@ -20,7 +19,7 @@ app.layout = html.Div([
         html.Div([
             html.Label(category),
             dcc.Input(id=f'input-{category}', type='number', placeholder='Enter Value'),
-            html.Button('Add', id=f'add-button-{category}', n_clicks=0)
+            html.Button('Update', id=f'update-button-{category}', n_clicks=0)
         ]) for category in df['Category']
     ], style={'margin-bottom': '20px'}),
 ])
@@ -54,7 +53,6 @@ def update_chart(*args):
     return bar_fig, pie_fig
 
 if __name__ == '__main__':
-app.run_server(debug=True)
-
+    app.run_server(debug=True)
 
 application = app.server
