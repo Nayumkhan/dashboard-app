@@ -15,7 +15,10 @@ df = pd.DataFrame({
 
 app.layout = html.Div([
     html.H1("Truck Management Dashboard"),
-    html.Div(id='total-trucks', style={'fontSize': 20, 'margin-bottom': '20px'}),
+    html.Div([
+        html.Div(id='total-trucks', style={'fontSize': 20, 'margin-right': '10px'}),
+        html.Button('Update', id='update-total', n_clicks=0, style={'padding': '10px'})
+    ], style={'display': 'flex', 'align-items': 'center', 'margin-bottom': '20px'}),
     dcc.Graph(id='bar-chart', style={'height': '300px'}),
     dcc.Graph(id='pie-chart'),
     html.Div([
@@ -33,7 +36,8 @@ app.layout = html.Div([
     [Output('bar-chart', 'figure'),
      Output('pie-chart', 'figure'),
      Output('total-trucks', 'children')],
-    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']],
+    [Input(f'update-button-{category}', 'n_clicks') for category in df['Category']] +
+    [Input('update-total', 'n_clicks')],
     [Input(f'input-{category}', 'value') for category in df['Category']]
 )
 def update_chart(*args):
@@ -72,6 +76,13 @@ def download_xlsx(n_clicks):
         writer.save()
         output.seek(0)
     return dict(content=output.getvalue(), filename="truck_data.xlsx")
+
+@app.callback(
+    [Output(f'input-{category}', 'value') for category in df['Category']],
+    [Input(f'input-{category}', 'value') for category in df['Category']]
+)
+def clear_inputs(*values):
+    return [None] * len(values)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
