@@ -7,7 +7,7 @@ import pandas as pd
 app = dash.Dash(__name__)
 
 df = pd.DataFrame({
-    "Category": ["Available Trucks", "Trucks in Operation", "Waiting Load", "Under Offload", "Breakdown"],
+    "Category": ["Total number of Trucks", "Available Trucks", "Trucks in Operation", "Waiting Load", "Under Offload", "Breakdown"],
     "Values": [0, 0, 0, 0, 0]
 })
 
@@ -41,9 +41,10 @@ def update_chart(*args):
     bar_fig = px.bar(df, x='Category', y='Values', title='Bar Chart of Truck Categories',
                      color='Category', 
                      color_discrete_map={
+			 "Total number of Trucks": "blue",
                          "Available Trucks": "green",
-                         "Trucks in Operation": "blue",
-                         "Waiting Load": "orange",
+                         "Trucks in Operation": "orange",
+                         "Waiting Load": "yellow",
                          "Under Offload": "purple",
                          "Breakdown": "red"
                      })
