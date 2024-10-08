@@ -8,7 +8,7 @@ app = dash.Dash(__name__)
 
 df = pd.DataFrame({
     "Category": ["Total number of Trucks", "Available Trucks", "Trucks in Operation", "Waiting Load", "Under Offload", "Breakdown"],
-    "Values": [0, 0, 0, 0, 0]
+    "Values": [0, 0, 0, 0, 0, 0]
 })
 
 app.layout = html.Div([
